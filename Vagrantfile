@@ -20,14 +20,13 @@ Vagrant.configure("2") do |config|
   # config.vm.box_check_update = false
 
   # Create a forwarded port mapping which allows access to a specific port
-  # within the machine from a port on the host machine. In the example below,
-  # accessing "localhost:8080" will access port 80 on the guest machine.
   # NOTE: This will enable public access to the opened port
-  config.vm.network "forwarded_port", guest: 9000, host: 9000
-  config.vm.network "forwarded_port", guest: 8080, host: 8080
-  config.vm.network "forwarded_port", guest: 3001, host: 3001
+  # Forward all ports that are used in training material
+  for i in 8000..9000
+    config.vm.network "forwarded_port", guest: i, host: i
+  end
   config.vm.network "forwarded_port", guest: 3000, host: 3000
-  config.vm.network "forwarded_port", guest: 8086, host: 8086
+  config.vm.network "forwarded_port", guest: 3001, host: 3001
 
   # Create a forwarded port mapping which allows access to a specific port
   # within the machine from a port on the host machine and only allow access
@@ -53,13 +52,24 @@ Vagrant.configure("2") do |config|
   # backing providers for Vagrant. These expose provider-specific options.
   # Example for VirtualBox:
   #
-  # config.vm.provider "virtualbox" do |vb|
-  #   # Display the VirtualBox GUI when booting the machine
-  #   vb.gui = true
-  #
-  #   # Customize the amount of memory on the VM:
-  #   vb.memory = "1024"
-  # end
+  config.vm.provider "virtualbox" do |vb|
+    host = RbConfig::CONFIG['host_os']
+
+    # src: https://gist.github.com/ozbillwang/7834632bb41c5642912e
+    if host =~ /linux/
+      cpus = `nproc`.to_i
+      # meminfo shows KB and we need to convert to MB
+      mem = `grep 'MemTotal' /proc/meminfo | sed -e 's/MemTotal://' -e 's/ kB//'`.to_i / 1024 / 4
+    else
+      cpus = 2
+      mem = 1024
+    end
+
+    vb.cpus = cpus
+    vb.memory = mem
+    vb.customize ["modifyvm", :id, "--memory", mem]
+    vb.customize ["modifyvm", :id, "--cpus", cpus]
+  end
   #
   # View the documentation for the provider you are using for more
   # information on available options.

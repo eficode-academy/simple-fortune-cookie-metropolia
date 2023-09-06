@@ -2,12 +2,14 @@ credentials:
   system:
     domainCredentials:
     - credentials:
-      - usernamePassword:
-          description: "vagrant"
-          id: "vagrant"
-          password: "vagrant"
+      - basicSSHUserPrivateKey:
+          id: "ssh_id"
+          privateKeySource:
+            directEntry:
+              privateKey: "${readFile:/var/lib/secrets/id_ed25519}"
           scope: GLOBAL
-          username: "vagrant"
+          username: "root"
+
 jenkins:
   labelAtoms:
   - name: "build"
@@ -17,8 +19,8 @@ jenkins:
       labelString: "build"
       launcher:
         ssh:
-          credentialsId: "vagrant"
-          host: "172.17.0.1"
+          credentialsId: "ssh_id"
+          host: "builder"
           port: 22
           sshHostKeyVerificationStrategy: "nonVerifyingKeyVerificationStrategy"
       name: "build"
